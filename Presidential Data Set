@@ -1,0 +1,78 @@
+-- Presidential Data Set
+
+SELECT CandidateID, FirstName ||' '|| MiddleName ||' '|| LastName ||' '|| Suffix AS FullName
+FROM CANDIDATE JOIN TICKET
+ON CANDIDATE.CandidateID = TICKET.VicePresident
+JOIN RESULTS ON RESULTS.TicketID = TICKET.TicketID
+WHERE Winner = 1
+INTERSECT
+SELECT CandidateID, FirstName ||' '|| MiddleName ||' '|| LastName ||' '|| Suffix AS FullName
+FROM CANDIDATE RIGHT JOIN TICKET
+ON CANDIDATE.CandidateID = TICKET.President;
+
+
+SELECT CASE
+WHEN (Year-BirthYear) BETWEEN 35 AND 44 THEN 'Young'
+WHEN (Year-BirthYear) BETWEEN 45 AND 54 THEN 'Middle-Aged'
+WHEN (Year-BirthYear) BETWEEN 55 AND 64 THEN 'Older'
+ELSE 'Elderly'
+END AS AgeCategory,
+COUNT(*) AS TotalPresidents
+FROM CANDIDATE JOIN TICKET
+ON CANDIDATE.CandidateID = TICKET.President
+JOIN RESULTS ON TICKET.TicketID = RESULTS.TicketID
+JOIN ELECTION ON ELECTION.ElectionID = RESULTS.ElectionID
+WHERE Winner = 1
+GROUP BY CASE
+WHEN (Year-BirthYear) BETWEEN 35 AND 44 THEN 'Young'
+WHEN (Year-BirthYear) BETWEEN 45 AND 54 THEN 'Middle-Aged'
+WHEN (Year-BirthYear) BETWEEN 55 AND 64 THEN 'Older'
+ELSE 'Elderly'
+END
+ORDER BY TotalPresidents;
+
+
+SELECT FirstName, LastName, Party, ElectoralVote, ROUND(((ElectoralVote/TotalElectors)*100), 2) || '%' AS TotalElectoralVotesWon
+FROM CANDIDATE JOIN TICKET
+ON CANDIDATE.CandidateID = TICKET.President
+JOIN RESULTS ON TICKET.TicketID = RESULTS.TicketID
+JOIN ELECTION ON RESULTS.ElectionID = ELECTION.ElectionID
+WHERE ElectoralVote > 0
+AND Race <> 'W'
+UNION
+SELECT FirstName, LastName, Party, ElectoralVote, ROUND(((ElectoralVote/TotalElectors)*100), 2) || '%' AS TotalElectoralVotesWon
+FROM CANDIDATE JOIN TICKET
+ON CANDIDATE.CandidateID = TICKET.President
+JOIN RESULTS ON TICKET.TicketID = RESULTS.TicketID
+JOIN ELECTION ON RESULTS.ElectionID = ELECTION.ElectionID
+WHERE ElectoralVote > 0
+AND Sex <> 'M';
+
+
+SELECT Year, FirstName, LastName, HomeState
+FROM (SELECT MAX(ElectoralVote) AS MaxElectoralVote, ElectionID
+FROM RESULTS
+WHERE Winner <> 1
+GROUP BY ElectionID) VICEPRESIDENT
+JOIN ELECTION ON ELECTION.ElectionID = VICEPRESIDENT.ElectionID
+JOIN RESULTS ON RESULTS.ElectionID = VICEPRESIDENT.ElectionID AND RESULTS.ElectoralVote = VICEPRESIDENT.MaxElectoralVote
+JOIN TICKET ON RESULTS.TicketID = TICKET.TicketID
+JOIN CANDIDATE ON TICKET.President = CANDIDATE.CandidateID
+WHERE Year < 1804
+AND RESULTS.Winner <> 1
+ORDER BY Year ASC;
+
+
+SELECT DISTINCT HomeState
+FROM CANDIDATE
+WHERE HomeState NOT IN (SELECT HomeState
+FROM CANDIDATE JOIN TICKET
+ON CANDIDATE.CandidateID = TICKET.President
+JOIN RESULTS ON TICKET.TicketID = RESULTS.TicketID
+WHERE Winner = 1)
+AND HomeState NOT IN (SELECT HomeState
+FROM CANDIDATE JOIN TICKET
+ON CANDIDATE.CandidateID = TICKET.VicePresident
+JOIN RESULTS ON TICKET.TicketID = RESULTS.TicketID
+WHERE Winner = 1)
+ORDER BY HomeState ASC;
