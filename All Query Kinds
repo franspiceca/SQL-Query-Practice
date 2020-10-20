@@ -76,3 +76,40 @@ ON CANDIDATE.CandidateID = TICKET.VicePresident
 JOIN RESULTS ON TICKET.TicketID = RESULTS.TicketID
 WHERE Winner = 1)
 ORDER BY HomeState ASC;
+
+
+
+
+
+
+-- NEW DATA SET: Newspaper Respondents
+
+
+SELECT News, COUNT(ResponseID) AS TotalNumberofRespondents
+FROM NEWS
+GROUP BY News
+ORDER BY TotalNumberofRespondents DESC;
+
+
+SELECT NEWS.News, COUNT(RESPONSES.ResponseId)/(SELECT COUNT(RESPONSES.ResponseId)
+FROM RESPONSES
+WHERE Gender = 'Female') AS ProportionofFemaleRespondents
+FROM NEWS JOIN RESPONSES
+ON NEWS.ResponseId = RESPONSES.ResponseId
+WHERE Gender = 'Female'
+AND News NOT IN 'Other'
+GROUP BY NEWS.News
+ORDER BY ProportionofFemaleRespondents DESC
+FETCH FIRST 10 ROWS ONLY;
+
+
+SELECT NEWS.News, COUNT(RESPONSES.ResponseId)/(SELECT COUNT(RESPONSES.ResponseId)
+FROM RESPONSES
+WHERE Gender = 'Male') AS ProportionofMaleRespondents
+FROM NEWS JOIN RESPONSES
+ON NEWS.ResponseId = RESPONSES.ResponseId
+WHERE Gender = 'Male'
+AND News NOT IN 'Other'
+GROUP BY NEWS.News
+ORDER BY ProportionofMaleRespondents DESC
+FETCH FIRST 10 ROWS ONLY;
